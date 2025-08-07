@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteOption = exports.createOption = exports.updateOption = exports.getOption = exports.getAllOptions = exports.deleteVote = exports.updateVote = exports.createVote = exports.getVote = exports.getAllVotes = void 0;
+exports.deleteVote = exports.updateVote = exports.createVote = exports.getVote = exports.getAllVotes = void 0;
 const db_1 = require("../../models/db");
 const schema_1 = require("../../models/schema");
 const response_1 = require("../../utils/response");
@@ -87,11 +87,12 @@ const createVote = async (req, res) => {
             if (items.length) {
                 items.forEach(async (item) => {
                     await tx
-                        .update(schema_1.votesItems)
-                        .set({
+                        .insert(schema_1.votesItems)
+                        .values({
                         voteId: voteId,
-                    })
-                        .where((0, drizzle_orm_1.eq)(schema_1.votesItems.id, item));
+                        item: item,
+                        id: item.id || (0, uuid_1.v4)(),
+                    });
                 });
             }
         }
@@ -166,52 +167,44 @@ const deleteVote = async (req, res) => {
 };
 exports.deleteVote = deleteVote;
 //options
-const getAllOptions = async (req, res) => {
-    const options = await db_1.db.select().from(schema_1.votesItems);
-    if (!options.length) {
-        throw new Errors_1.NotFound("No options found");
-    }
-    (0, response_1.SuccessResponse)(res, { options }, 200);
-};
-exports.getAllOptions = getAllOptions;
-const getOption = async (req, res) => {
-    const { id } = req.params;
-    const option = await db_1.db.query.votesItems.findFirst({
-        where: (0, drizzle_orm_1.eq)(schema_1.votesItems.id, id),
-    });
-    if (!option)
-        throw new Errors_1.NotFound("Option not found");
-    (0, response_1.SuccessResponse)(res, { option }, 200);
-};
-exports.getOption = getOption;
-const updateOption = async (req, res) => {
-    const { item } = req.body;
-    const id = req.params.id;
-    const [itemV] = await db_1.db
-        .select()
-        .from(schema_1.votesItems)
-        .where((0, drizzle_orm_1.eq)(schema_1.votesItems.id, id));
-    if (!itemV)
-        throw new Errors_1.NotFound("option not found");
-    await db_1.db.update(schema_1.votesItems).set({ item }).where((0, drizzle_orm_1.eq)(schema_1.votesItems.id, id));
-    (0, response_1.SuccessResponse)(res, { message: "Option Updated Successfully" }, 200);
-};
-exports.updateOption = updateOption;
-const createOption = async (req, res) => {
-    const { item } = req.body;
-    const id = (0, uuid_1.v4)();
-    await db_1.db.insert(schema_1.votesItems).values({ id, item });
-    (0, response_1.SuccessResponse)(res, { message: "Option Updated Successfully" }, 200);
-};
-exports.createOption = createOption;
-const deleteOption = async (req, res) => {
-    const { id } = req.params;
-    const option = await db_1.db.query.votesItems.findFirst({
-        where: (0, drizzle_orm_1.eq)(schema_1.votesItems.id, id),
-    });
-    if (!option)
-        throw new Errors_1.NotFound("Option not found");
-    await db_1.db.delete(schema_1.votesItems).where((0, drizzle_orm_1.eq)(schema_1.votesItems.id, id));
-    (0, response_1.SuccessResponse)(res, { message: "option deleted" }, 200);
-};
-exports.deleteOption = deleteOption;
+// export const getAllOptions = async (req: Request, res: Response) => {
+//   const options = await db.select().from(votesItems);
+//   if (!options.length) {
+//     throw new NotFound("No options found");
+//   }
+//   SuccessResponse(res, { options }, 200);
+// };
+// export const getOption = async (req: Request, res: Response) => {
+//   const { id } = req.params;
+//   const option = await db.query.votesItems.findFirst({
+//     where: eq(votesItems.id, id),
+//   });
+//   if (!option) throw new NotFound("Option not found");
+//   SuccessResponse(res, { option }, 200);
+// };
+// export const updateOption = async (req: Request, res: Response) => {
+//   const { item } = req.body;
+//   const id = req.params.id;
+//   const [itemV] = await db
+//     .select()
+//     .from(votesItems)
+//     .where(eq(votesItems.id, id));
+//   if (!itemV) throw new NotFound("option not found");
+//   await db.update(votesItems).set({ item }).where(eq(votesItems.id, id));
+//   SuccessResponse(res, { message: "Option Updated Successfully" }, 200);
+// };
+// export const createOption = async (req: Request, res: Response) => {
+//   const { item } = req.body;
+//   const id = uuidv4();
+//   await db.insert(votesItems).values({ id, item });
+//   SuccessResponse(res, { message: "Option Updated Successfully" }, 200);
+// };
+// export const deleteOption = async (req: Request, res: Response) => {
+//   const { id } = req.params;
+//   const option = await db.query.votesItems.findFirst({
+//     where: eq(votesItems.id, id),
+//   });
+//   if (!option) throw new NotFound("Option not found");
+//   await db.delete(votesItems).where(eq(votesItems.id, id));
+//   SuccessResponse(res, { message: "option deleted" }, 200);
+// };
