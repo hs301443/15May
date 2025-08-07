@@ -1,0 +1,48 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1751860232992,
+      "tag": "0000_abandoned_captain_marvel",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1751860616051,
+      "tag": "0001_legal_captain_flint",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1751965571180,
+      "tag": "0002_even_nekra",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1751972329999,
+      "tag": "0003_true_medusa",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1752043058307,
+      "tag": "0004_deep_wallow",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1752144849496,
+      "tag": "0005_giant_slapstick",
+      "breakpoints": true
+    }
+  ]
+}

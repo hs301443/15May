@@ -1,0 +1,11 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const profile_1 = require("../../controllers/users/profile");
+const catchAsync_1 = require("../../utils/catchAsync");
+const validation_1 = require("../../middlewares/validation");
+const profile_2 = require("../../validators/users/profile");
+const route = (0, express_1.Router)();
+route.get("/", (0, catchAsync_1.catchAsync)(profile_1.getProfile));
+route.put("/", (0, validation_1.validate)(profile_2.updateUserProfileSchema), (0, catchAsync_1.catchAsync)(profile_1.updateProfile));
+exports.default = route;
