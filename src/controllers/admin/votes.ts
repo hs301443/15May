@@ -116,50 +116,51 @@ export const updateVote = async (req: Request, res: Response) => {
   const vote = await db.query.votes.findFirst({ where: eq(votes.id, id) });
   if (!vote) throw new NotFound("Vote not found");
 
-  const { name, maxSelections, items, startDate, endDate } = req.body;
-
+  const { name, maxSelection, maxSelections, items, startDate, endDate } = req.body;
 
   await db.transaction(async (tx) => {
+    // Prepare update object
+    const updateData: any = { name };
+
+    // Handle maxSelections (accepts both names)
+    if (maxSelection !== undefined || maxSelections !== undefined) {
+      updateData.maxSelections = maxSelection ?? maxSelections;
+    }
+
+    // Handle dates if provided
+    if (startDate) {
+      updateData.startDate = new Date(new Date(startDate).getTime() + 3 * 60 * 60 * 1000);
+    }
+    if (endDate) {
+      updateData.endDate = new Date(new Date(endDate).getTime() + 3 * 60 * 60 * 1000);
+    }
+
     // Update vote main data
-    await tx
-      .update(votes)
-      .set({
-        name,
-        maxSelections,
-        startDate: new Date(new Date(startDate).getTime() + 3 * 60 * 60 * 1000),
-        endDate: new Date(new Date(endDate).getTime() + 3 * 60 * 60 * 1000),
-      })
-      .where(eq(votes.id, id));
+    await tx.update(votes).set(updateData).where(eq(votes.id, id));
 
     // Handle vote items
     if (items && Array.isArray(items)) {
       for (const item of items) {
         if (typeof item === "string") {
           // Remove item from vote (unlink)
-          await tx
-            .update(votesItems)
-            .set({ voteId: null })
-            .where(eq(votesItems.id, item));
+          await tx.update(votesItems).set({ voteId: null }).where(eq(votesItems.id, item));
         } 
-        else if (item.id && item.item) {
+        else if (item.id && (item.item || item.value)) {
           // Update existing item
-          await tx
-            .update(votesItems)
+          await tx.update(votesItems)
             .set({
               voteId: id,
-              item: item.item, // keeping same column name as createVote
+              item: item.item ?? item.value,
             })
             .where(eq(votesItems.id, item.id));
         } 
-        else if (!item.id && item.item) {
+        else if (!item.id && (item.item || item.value)) {
           // Insert new item
-          await tx
-            .insert(votesItems)
-            .values({
-              voteId: id,
-              item: item.item,
-              id: uuidv4(),
-            });
+          await tx.insert(votesItems).values({
+            voteId: id,
+            item: item.item ?? item.value,
+            id: uuidv4(),
+          });
         }
       }
     }
