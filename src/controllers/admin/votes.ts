@@ -112,13 +112,15 @@ export const createVote = async (req: Request, res: Response) => {
 
 export const updateVote = async (req: Request, res: Response) => {
   const id = req.params.id;
+
   const vote = await db.query.votes.findFirst({ where: eq(votes.id, id) });
   if (!vote) throw new NotFound("Vote not found");
 
   const { name, maxSelections, items, startDate, endDate } = req.body;
 
+
   await db.transaction(async (tx) => {
-    // Update vote
+    // Update vote main data
     await tx
       .update(votes)
       .set({
@@ -133,17 +135,31 @@ export const updateVote = async (req: Request, res: Response) => {
     if (items && Array.isArray(items)) {
       for (const item of items) {
         if (typeof item === "string") {
-          // Only an ID provided → delete item
+          // Remove item from vote (unlink)
           await tx
             .update(votesItems)
             .set({ voteId: null })
             .where(eq(votesItems.id, item));
-        } else if (item.id && item.value) {
+        } 
+        else if (item.id && item.item) {
           // Update existing item
           await tx
             .update(votesItems)
-            .set({ voteId: id })
+            .set({
+              voteId: id,
+              item: item.item, // keeping same column name as createVote
+            })
             .where(eq(votesItems.id, item.id));
+        } 
+        else if (!item.id && item.item) {
+          // Insert new item
+          await tx
+            .insert(votesItems)
+            .values({
+              voteId: id,
+              item: item.item,
+              id: uuidv4(),
+            });
         }
       }
     }
