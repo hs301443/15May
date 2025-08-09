@@ -120,7 +120,12 @@ export const updateVote = async (req: Request, res: Response) => {
 
   await db.transaction(async (tx) => {
     // Prepare update object
-    const updateData: any = { name };
+    const updateData: any = {};
+
+    // Update name if provided
+    if (name !== undefined) {
+      updateData.name = name;
+    }
 
     // Handle maxSelections (accepts both names)
     if (maxSelection !== undefined || maxSelections !== undefined) {
@@ -136,29 +141,33 @@ export const updateVote = async (req: Request, res: Response) => {
     }
 
     // Update vote main data
-    await tx.update(votes).set(updateData).where(eq(votes.id, id));
+    if (Object.keys(updateData).length > 0) {
+      await tx.update(votes).set(updateData).where(eq(votes.id, id));
+    }
 
     // Handle vote items
     if (items && Array.isArray(items)) {
       for (const item of items) {
         if (typeof item === "string") {
           // Remove item from vote (unlink)
-          await tx.update(votesItems).set({ voteId: null }).where(eq(votesItems.id, item));
+          await tx.update(votesItems)
+            .set({ voteId: null })
+            .where(eq(votesItems.id, item));
         } 
-        else if (item.id && (item.item || item.value)) {
+        else if (item.id) {
           // Update existing item
           await tx.update(votesItems)
             .set({
               voteId: id,
-              item: item.item ?? item.value,
+              item: item.item ?? item.value ?? item.name ?? "",
             })
             .where(eq(votesItems.id, item.id));
         } 
-        else if (!item.id && (item.item || item.value)) {
+        else {
           // Insert new item
           await tx.insert(votesItems).values({
             voteId: id,
-            item: item.item ?? item.value,
+            item: item.item ?? item.value ?? item.name ?? "",
             id: uuidv4(),
           });
         }
@@ -168,6 +177,7 @@ export const updateVote = async (req: Request, res: Response) => {
 
   SuccessResponse(res, { message: "Vote updated successfully" }, 200);
 };
+
 
 export const deleteVote = async (req: Request, res: Response) => {
   const id = req.params.id;

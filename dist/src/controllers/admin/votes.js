@@ -108,7 +108,11 @@ const updateVote = async (req, res) => {
     const { name, maxSelection, maxSelections, items, startDate, endDate } = req.body;
     await db_1.db.transaction(async (tx) => {
         // Prepare update object
-        const updateData = { name };
+        const updateData = {};
+        // Update name if provided
+        if (name !== undefined) {
+            updateData.name = name;
+        }
         // Handle maxSelections (accepts both names)
         if (maxSelection !== undefined || maxSelections !== undefined) {
             updateData.maxSelections = maxSelection ?? maxSelections;
@@ -121,28 +125,32 @@ const updateVote = async (req, res) => {
             updateData.endDate = new Date(new Date(endDate).getTime() + 3 * 60 * 60 * 1000);
         }
         // Update vote main data
-        await tx.update(schema_1.votes).set(updateData).where((0, drizzle_orm_1.eq)(schema_1.votes.id, id));
+        if (Object.keys(updateData).length > 0) {
+            await tx.update(schema_1.votes).set(updateData).where((0, drizzle_orm_1.eq)(schema_1.votes.id, id));
+        }
         // Handle vote items
         if (items && Array.isArray(items)) {
             for (const item of items) {
                 if (typeof item === "string") {
                     // Remove item from vote (unlink)
-                    await tx.update(schema_1.votesItems).set({ voteId: null }).where((0, drizzle_orm_1.eq)(schema_1.votesItems.id, item));
+                    await tx.update(schema_1.votesItems)
+                        .set({ voteId: null })
+                        .where((0, drizzle_orm_1.eq)(schema_1.votesItems.id, item));
                 }
-                else if (item.id && (item.item || item.value)) {
+                else if (item.id) {
                     // Update existing item
                     await tx.update(schema_1.votesItems)
                         .set({
                         voteId: id,
-                        item: item.item ?? item.value,
+                        item: item.item ?? item.value ?? item.name ?? "",
                     })
                         .where((0, drizzle_orm_1.eq)(schema_1.votesItems.id, item.id));
                 }
-                else if (!item.id && (item.item || item.value)) {
+                else {
                     // Insert new item
                     await tx.insert(schema_1.votesItems).values({
                         voteId: id,
-                        item: item.item ?? item.value,
+                        item: item.item ?? item.value ?? item.name ?? "",
                         id: (0, uuid_1.v4)(),
                     });
                 }
