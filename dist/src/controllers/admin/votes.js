@@ -107,7 +107,7 @@ const updateVote = async (req, res) => {
         throw new Errors_1.NotFound("Vote not found");
     const { name, maxSelections, items, startDate, endDate } = req.body;
     await db_1.db.transaction(async (tx) => {
-        // Update vote
+        // Update vote main data
         await tx
             .update(schema_1.votes)
             .set({
@@ -121,18 +121,31 @@ const updateVote = async (req, res) => {
         if (items && Array.isArray(items)) {
             for (const item of items) {
                 if (typeof item === "string") {
-                    // Only an ID provided → delete item
+                    // Remove item from vote (unlink)
                     await tx
                         .update(schema_1.votesItems)
                         .set({ voteId: null })
                         .where((0, drizzle_orm_1.eq)(schema_1.votesItems.id, item));
                 }
-                else if (item.id && item.value) {
+                else if (item.id && item.item) {
                     // Update existing item
                     await tx
                         .update(schema_1.votesItems)
-                        .set({ voteId: id })
+                        .set({
+                        voteId: id,
+                        item: item.item, // keeping same column name as createVote
+                    })
                         .where((0, drizzle_orm_1.eq)(schema_1.votesItems.id, item.id));
+                }
+                else if (!item.id && item.item) {
+                    // Insert new item
+                    await tx
+                        .insert(schema_1.votesItems)
+                        .values({
+                        voteId: id,
+                        item: item.item,
+                        id: (0, uuid_1.v4)(),
+                    });
                 }
             }
         }
