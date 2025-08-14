@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.authenticateAdmin = void 0;
 exports.authenticated = authenticated;
 const auth_1 = require("../utils/auth");
 const Errors_1 = require("../Errors");
@@ -13,3 +14,15 @@ function authenticated(req, res, next) {
     req.user = decoded;
     next();
 }
+const authenticateAdmin = (req, res, next) => {
+    const apiKey = req.headers['x-api-key'];
+    if (!apiKey || apiKey !== process.env.ADMIN_API_KEY) {
+        void res.status(401).json({
+            success: false,
+            message: 'Unauthorized: Invalid API key'
+        });
+        return; // مهم بعد void
+    }
+    next();
+};
+exports.authenticateAdmin = authenticateAdmin;

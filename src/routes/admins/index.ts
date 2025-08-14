@@ -11,6 +11,7 @@ import ComplaintsCategoryRoute from "./complaintsCategory";
 import AuthRoute from "./auth";
 import UsersAdmin from "./users";
 import voteRoute from "./votes";
+import notificationRoutes from './Notification';
 import { Router } from "express";
 const route = Router();
 route.use("/auth", AuthRoute);
@@ -25,4 +26,6 @@ route.use("/sliders", SlidersRoute);
 route.use("/complaints/category", ComplaintsCategoryRoute);
 route.use("/complaints", ComplaintRoute);
 route.use("/competitions", CompetitionRoute);
+route.use("/notifications", notificationRoutes);
+
 export default route;

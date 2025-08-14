@@ -1,10 +1,11 @@
 import admin from "firebase-admin";
 import fs from "fs";
 import path from "path";
-
 const serviceAccountPath = path.join(
   __dirname,
-  "mayclub-691bb-firebase-adminsdk-fbsvc-c6e9fe6d70.json"
+  "..",
+  "..",
+  "may-9b275-firebase-adminsdk-fbsvc-d60994312c.json"
 );
 
 // Ensure file exists before reading (avoid crash)
@@ -21,4 +22,11 @@ if (!admin.apps.length) {
   });
 }
 
+
+export const messaging: admin.messaging.Messaging = admin.messaging();
+export const firestore = admin.firestore();
 export default admin;
+
+
+
+
