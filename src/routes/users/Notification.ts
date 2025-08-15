@@ -4,8 +4,8 @@ import { getAllNotifications, getUnseenCount, getNotificationById } from '../../
 import { catchAsync } from '../../utils/catchAsync';
 
 const router = Router();
-router.get('/notifications', authenticated, catchAsync(getAllNotifications));
+router.get('/', authenticated, catchAsync(getAllNotifications));
 router.get('/unseen-count', authenticated, catchAsync(getUnseenCount));
-router.get('notifications/:id', authenticated, catchAsync(getNotificationById));
+router.get('/:id', authenticated, catchAsync(getNotificationById));
 export default router;
 
