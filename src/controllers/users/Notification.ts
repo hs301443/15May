@@ -1,13 +1,8 @@
 import { Request, Response } from "express";
-import { messaging } from "../../utils/firebase";
 import { notifications } from "../../models/schema";
-import { users } from "../../models/schema";
 import { db } from "../../models/db";
-import { isNotNull } from "drizzle-orm";
 import { UnauthorizedError } from "../../Errors";
-import { BadRequest } from "../../Errors/BadRequest";
 import { NotFound } from "../../Errors/NotFound";
-import { v4 as uuidv4 } from "uuid";
 import { eq,and } from "drizzle-orm";
 
 export const getAllNotifications = async (req:Request, res:Response) => {
@@ -71,4 +66,4 @@ export const getNotificationById = async (req: Request, res: Response) => {
   }
 
   res.json(notif[0]);
-};
+};  
