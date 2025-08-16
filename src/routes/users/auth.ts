@@ -18,6 +18,7 @@ import {
   resetPasswordSchema,
   checkResetCodeSchema,
 } from "../../validators/users/auth";
+import { authenticated } from "../../middlewares/authenticated";
 
 const route = Router();
 
@@ -31,5 +32,5 @@ route.post(
 route.post("/forgot-password", validate(sendResetCodeSchema), sendResetCode);
 route.post("/verify-code", validate(checkResetCodeSchema), verifyCode);
 route.post("/reset-password", validate(resetPasswordSchema), resetPassword);
-route.post("/fcm-token", catchAsync(getFcmToken));
+route.post("/fcm-token",authenticated ,catchAsync(getFcmToken));
 export default route;
