@@ -79,12 +79,15 @@ export const getAllNotifications = async (req: Request, res: Response): Promise<
 
 // ✅ Get notification by id
 export const getNotificationById = async (req: Request, res: Response): Promise<void> => {
-  const { id } = req.params;
+  const { id } = req.params; // id من الـ URL كـ string
+  console.log("Fetching notification id:", id);
 
   const data = await db
     .select()
     .from(notifications)
     .where(eq(notifications.id, id));
+
+  console.log("Result from DB:", data);
 
   if (!data.length) {
     throw new NotFound("Notification not found");
