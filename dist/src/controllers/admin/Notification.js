@@ -62,12 +62,13 @@ const sendNotificationToAll = async (req, res) => {
     }
 };
 exports.sendNotificationToAll = sendNotificationToAll;
+// ✅ Get all notifications (admin)
 const getAllNotifications = async (req, res) => {
     const data = await db_1.db.select().from(schema_1.notifications);
-    (0, response_1.SuccessResponse)(res, { data: data }, 200);
+    (0, response_1.SuccessResponse)(res, { data }, 200); // من غير return
 };
 exports.getAllNotifications = getAllNotifications;
-// 📌 3. الحصول على إشعار واحد
+// ✅ Get notification by id
 const getNotificationById = async (req, res) => {
     const { id } = req.params;
     const data = await db_1.db
@@ -79,7 +80,7 @@ const getNotificationById = async (req, res) => {
     }
     res.json({
         success: true,
-        data: data[0]
+        data: data[0],
     });
 };
 exports.getNotificationById = getNotificationById;

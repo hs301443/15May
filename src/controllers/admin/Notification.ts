@@ -70,15 +70,15 @@ export const sendNotificationToAll = async (req: Request, res: Response) => {
   }
 };
 
-export const getAllNotifications = async (req: Request, res: Response) => {
+// ✅ Get all notifications (admin)
+export const getAllNotifications = async (req: Request, res: Response): Promise<void> => {
   const data = await db.select().from(notifications);
 
-    SuccessResponse(res, {data: data }, 200);
-  
+  SuccessResponse(res, { data }, 200); // من غير return
 };
 
-// 📌 3. الحصول على إشعار واحد
-export const getNotificationById = async (req: Request, res: Response) => {
+// ✅ Get notification by id
+export const getNotificationById = async (req: Request, res: Response): Promise<void> => {
   const { id } = req.params;
 
   const data = await db
@@ -92,9 +92,10 @@ export const getNotificationById = async (req: Request, res: Response) => {
 
   res.json({
     success: true,
-    data: data[0]
+    data: data[0],
   });
 };
+
 
 // 📌 4. تحديث إشعار
 export const updateNotification = async (req: Request, res: Response) => {
