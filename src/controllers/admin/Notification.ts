@@ -19,14 +19,14 @@ export const sendNotificationToAll = async (req: Request, res: Response) => {
       throw new BadRequest("Title and body are required");
     }
 
-    // 1️⃣ إنشاء Notification واحد فقط للجميع
+    // 1️⃣ إنشاء Notification واحد فقط
     const notificationId = uuidv4();
     await db.insert(notifications).values({
       id: notificationId,
-      userId: "BROADCAST", 
       title,
       body,
       status: "unseen",
+      userId: "BROADCAST", // 👈 ممكن تخليها null أو قيمة ثابتة لو مش عايز تربطها بمستخدم
     });
 
     // 2️⃣ جلب كل التوكنات
@@ -44,7 +44,7 @@ export const sendNotificationToAll = async (req: Request, res: Response) => {
     // 3️⃣ إرسال الإشعار عبر Firebase
     const message = {
       notification: { title, body },
-      tokens: tokens,
+      tokens, // 👈 هنا بيبعت مرة واحدة لكل التوكنات
     };
 
     const response = await messaging.sendEachForMulticast(message);
@@ -53,11 +53,10 @@ export const sendNotificationToAll = async (req: Request, res: Response) => {
     res.json({
       success: true,
       message: "Notification sent successfully",
-      notificationId, // إرجاع معرف الإشعار
+      notificationId,
       results: {
         successCount: response.successCount,
         failureCount: response.failureCount,
-        responses: response.responses,
       },
     });
   } catch (error) {
