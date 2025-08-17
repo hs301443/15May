@@ -5,3 +5,4 @@ import {isBirthdayToday } from "../../controllers/users/checkBirthday";
 const router = Router();
 
 router.get("/",authenticated,catchAsync(isBirthdayToday))
+export default router;

@@ -9,6 +9,7 @@ import AuthRoute from "./auth";
 import ComplaintsRoute from "./complaints";
 import CompetitionsRoute from "./competitions";
 import notificationRoute from "./Notification";
+import birthdayRouter  from "./checkBirthday";
 import { Router } from "express";
 import multer from "multer";
 const upload = multer();
@@ -28,4 +29,5 @@ route.use("/profile", ProfileRoute);
 route.use("/complaints", ComplaintsRoute);
 route.use("/competitions", CompetitionsRoute);
 route.use("/notifications",notificationRoute); // Assuming Notification.ts is in the same directory
+route.use("/birthday", birthdayRouter); // Assuming checkBirthday.ts is in the same directory
 export default route;

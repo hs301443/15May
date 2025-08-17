@@ -14,6 +14,7 @@ const auth_1 = __importDefault(require("./auth"));
 const complaints_1 = __importDefault(require("./complaints"));
 const competitions_1 = __importDefault(require("./competitions"));
 const Notification_1 = __importDefault(require("./Notification"));
+const checkBirthday_1 = __importDefault(require("./checkBirthday"));
 const express_1 = require("express");
 const multer_1 = __importDefault(require("multer"));
 const upload = (0, multer_1.default)();
@@ -30,4 +31,5 @@ route.use("/profile", Profile_1.default);
 route.use("/complaints", complaints_1.default);
 route.use("/competitions", competitions_1.default);
 route.use("/notifications", Notification_1.default); // Assuming Notification.ts is in the same directory
+route.use("/birthday", checkBirthday_1.default); // Assuming checkBirthday.ts is in the same directory
 exports.default = route;
