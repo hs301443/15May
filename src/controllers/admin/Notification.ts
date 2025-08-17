@@ -72,10 +72,36 @@ export const sendNotificationToAll = async (req: Request, res: Response) => {
 
 // ✅ Get all notifications (admin)
 export const getAllNotifications = async (req: Request, res: Response): Promise<void> => {
-  const data = await db.select().from(notifications);
-  console.log("All notifications:", data); // هنا نشوف إذا فعلاً في بيانات
-  SuccessResponse(res, { data }, 200);
+  try {
+    console.log("Fetching all notifications from DB...");
+
+    const data = await db.select().from(notifications);
+
+    console.log("Result from DB:", data);
+
+    if (!data || data.length === 0) {
+      console.log("No notifications found!");
+      res.status(404).json({
+        success: false,
+        error: { code: 404, message: "Notification not found" },
+      });
+      return;
+    }
+
+    console.log(`Found ${data.length} notifications.`);
+    res.status(200).json({
+      success: true,
+      data,
+    });
+  } catch (err) {
+    console.error("Error fetching notifications:", err);
+    res.status(500).json({
+      success: false,
+      error: { code: 500, message: "Server error" },
+    });
+  }
 };
+
 
 
 // ✅ Get notification by id
