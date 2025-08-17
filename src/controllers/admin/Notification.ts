@@ -19,17 +19,22 @@ export const sendNotificationToAll = async (req: Request, res: Response) => {
       throw new BadRequest("Title and body are required");
     }
 
-    // 1️⃣ إنشاء Notification واحد فقط
-    const notificationId = uuidv4();
-    await db.insert(notifications).values({
-      id: notificationId,
+    // 1️⃣ جلب كل المستخدمين
+    const allUsers = await db.select({ id: users.id }).from(users);
+
+    // 2️⃣ تجهيز الإشعارات لكل المستخدمين
+    const notificationsData = allUsers.map((user) => ({
+      id: uuidv4(),
       title,
       body,
       status: "unseen",
-      userId: null // 👈 ممكن تخليها null أو قيمة ثابتة لو مش عايز تربطها بمستخدم
-    });
+      userId: user.id,
+    }));
 
-    // 2️⃣ جلب كل التوكنات
+    // 3️⃣ إدخال كل الإشعارات مرة واحدة
+    await db.insert(notifications).values(notificationsData);
+
+    // 4️⃣ جلب التوكنات من جدول users
     const result = await db
       .select({ token: users.fcmtoken })
       .from(users)
@@ -41,25 +46,26 @@ export const sendNotificationToAll = async (req: Request, res: Response) => {
       throw new NotFound("No FCM tokens found");
     }
 
-    // 3️⃣ إرسال الإشعار عبر Firebase
+    // 5️⃣ إرسال الإشعار عبر Firebase
     const message = {
       notification: { title, body },
-      tokens, // 👈 هنا بيبعت مرة واحدة لكل التوكنات
+      tokens: tokens, // لازم تكون Array فيها قيم
     };
 
     const response = await messaging.sendEachForMulticast(message);
 
-    // 4️⃣ الرد النهائي
+    // 6️⃣ الرد النهائي
     res.json({
       success: true,
       message: "Notification sent successfully",
-      notificationId,
       results: {
         successCount: response.successCount,
         failureCount: response.failureCount,
+        responses: response.responses, // 👈 تفاصيل كل توكن
       },
     });
   } catch (error) {
+    // لو عامل Middleware للأخطاء، ارمي الخطأ
     throw error;
   }
 };

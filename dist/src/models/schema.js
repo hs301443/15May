@@ -190,6 +190,7 @@ exports.sliderImages = (0, mysql_core_1.mysqlTable)("slider_images", {
 exports.notifications = (0, mysql_core_1.mysqlTable)("notifications", {
     id: (0, mysql_core_1.varchar)("id", { length: 36 }).primaryKey(),
     userId: (0, mysql_core_1.varchar)("user_id", { length: 36 })
+        .notNull()
         .references(() => exports.users.id),
     title: (0, mysql_core_1.varchar)("title", { length: 255 }).notNull(),
     body: (0, mysql_core_1.text)("body").notNull(),

@@ -227,8 +227,9 @@ export const sliderImages = mysqlTable("slider_images", {
 
 export const notifications= mysqlTable("notifications", {
   id: varchar("id", { length: 36 }).primaryKey(),
-  userId: varchar("user_id", { length: 36 })
-    .references(() => users.id), 
+  userId:varchar("user_id", { length: 36 })
+    .notNull()
+    .references(() => users.id),
   title: varchar("title", { length: 255 }).notNull(),
   body: text("body").notNull(),
   status: varchar("status", { length: 20 }).default("unseen"), // unseen / seen
