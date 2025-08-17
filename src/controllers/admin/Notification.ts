@@ -26,7 +26,7 @@ export const sendNotificationToAll = async (req: Request, res: Response) => {
       title,
       body,
       status: "unseen",
-      userId: "BROADCAST", // 👈 ممكن تخليها null أو قيمة ثابتة لو مش عايز تربطها بمستخدم
+      userId: null // 👈 ممكن تخليها null أو قيمة ثابتة لو مش عايز تربطها بمستخدم
     });
 
     // 2️⃣ جلب كل التوكنات
