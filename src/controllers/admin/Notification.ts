@@ -73,14 +73,14 @@ export const sendNotificationToAll = async (req: Request, res: Response) => {
 // ✅ Get all notifications (admin)
 export const getAllNotifications = async (req: Request, res: Response): Promise<void> => {
   const data = await db.select().from(notifications);
-
-  SuccessResponse(res, { data }, 200); // من غير return
+  console.log("All notifications:", data); // هنا نشوف إذا فعلاً في بيانات
+  SuccessResponse(res, { data }, 200);
 };
+
 
 // ✅ Get notification by id
 export const getNotificationById = async (req: Request, res: Response): Promise<void> => {
-  const { id } = req.params; // id من الـ URL كـ string
-  console.log("Fetching notification id:", id);
+  const { id } = req.params; 
 
   const data = await db
     .select()

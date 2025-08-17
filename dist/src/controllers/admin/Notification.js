@@ -65,7 +65,8 @@ exports.sendNotificationToAll = sendNotificationToAll;
 // ✅ Get all notifications (admin)
 const getAllNotifications = async (req, res) => {
     const data = await db_1.db.select().from(schema_1.notifications);
-    (0, response_1.SuccessResponse)(res, { data }, 200); // من غير return
+    console.log("All notifications:", data); // هنا نشوف إذا فعلاً في بيانات
+    (0, response_1.SuccessResponse)(res, { data }, 200);
 };
 exports.getAllNotifications = getAllNotifications;
 // ✅ Get notification by id
@@ -75,6 +76,7 @@ const getNotificationById = async (req, res) => {
         .select()
         .from(schema_1.notifications)
         .where((0, drizzle_orm_2.eq)(schema_1.notifications.id, id));
+    console.log("Result from DB:", data);
     if (!data.length) {
         throw new NotFound_1.NotFound("Notification not found");
     }
