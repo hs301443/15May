@@ -8,6 +8,7 @@ import { BadRequest } from "../../Errors/BadRequest";
 import { NotFound } from "../../Errors/NotFound";
 import { v4 as uuidv4 } from "uuid";
 import { eq } from "drizzle-orm";
+import { SuccessResponse } from "../../utils/response";
 
 export const sendNotificationToAll = async (req: Request, res: Response) => {
   try {
@@ -59,10 +60,6 @@ await db.insert(notifications).values(notificationsData);
     res.json({
       success: true,
       message: "Notification sent successfully",
-      results: {
-        successCount: response.successCount,
-        failureCount: response.failureCount
-      }
     });
 
   } catch (error) {
@@ -74,10 +71,8 @@ await db.insert(notifications).values(notificationsData);
 export const getAllNotifications = async (req: Request, res: Response) => {
   const data = await db.select().from(notifications);
 
-  res.json({
-    success: true,
-    data
-  });
+    SuccessResponse(res, {data: data }, 200);
+  
 };
 
 // 📌 3. الحصول على إشعار واحد

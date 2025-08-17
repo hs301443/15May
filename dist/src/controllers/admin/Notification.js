@@ -10,6 +10,7 @@ const BadRequest_1 = require("../../Errors/BadRequest");
 const NotFound_1 = require("../../Errors/NotFound");
 const uuid_1 = require("uuid");
 const drizzle_orm_2 = require("drizzle-orm");
+const response_1 = require("../../utils/response");
 const sendNotificationToAll = async (req, res) => {
     try {
         const { title, body } = req.body;
@@ -49,10 +50,6 @@ const sendNotificationToAll = async (req, res) => {
         res.json({
             success: true,
             message: "Notification sent successfully",
-            results: {
-                successCount: response.successCount,
-                failureCount: response.failureCount
-            }
         });
     }
     catch (error) {
@@ -63,10 +60,7 @@ const sendNotificationToAll = async (req, res) => {
 exports.sendNotificationToAll = sendNotificationToAll;
 const getAllNotifications = async (req, res) => {
     const data = await db_1.db.select().from(schema_1.notifications);
-    res.json({
-        success: true,
-        data
-    });
+    (0, response_1.SuccessResponse)(res, { data: data }, 200);
 };
 exports.getAllNotifications = getAllNotifications;
 // 📌 3. الحصول على إشعار واحد
