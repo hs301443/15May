@@ -18,42 +18,46 @@ const sendNotificationToAll = async (req, res) => {
         if (!title || !body) {
             throw new BadRequest_1.BadRequest("Title and body are required");
         }
-        // 1️⃣ جلب كل المستخدمين (مع الـ id بتاعهم)
-        const allUsers = await db_1.db
-            .select({ id: schema_2.users.id })
-            .from(schema_2.users);
+        // 1️⃣ جلب كل المستخدمين
+        const allUsers = await db_1.db.select({ id: schema_2.users.id }).from(schema_2.users);
         // 2️⃣ تجهيز الإشعارات لكل المستخدمين
-        const notificationsData = allUsers.map(user => ({
+        const notificationsData = allUsers.map((user) => ({
             id: (0, uuid_1.v4)(),
             title,
             body,
             status: "unseen",
-            userId: user.id, // لكل مستخدم
+            userId: user.id,
         }));
         // 3️⃣ إدخال كل الإشعارات مرة واحدة
         await db_1.db.insert(schema_1.notifications).values(notificationsData);
-        // 2️⃣ جلب التوكنات من جدول users
+        // 4️⃣ جلب التوكنات من جدول users
         const result = await db_1.db
             .select({ token: schema_2.users.fcmtoken })
             .from(schema_2.users)
             .where((0, drizzle_orm_1.isNotNull)(schema_2.users.fcmtoken));
-        const tokens = result.map(row => row.token).filter(Boolean);
+        const tokens = result.map((row) => row.token).filter(Boolean);
         if (!tokens.length) {
             throw new NotFound_1.NotFound("No FCM tokens found");
         }
-        // 3️⃣ إرسال الإشعار عبر Firebase
+        // 5️⃣ إرسال الإشعار عبر Firebase
         const message = {
             notification: { title, body },
-            tokens
+            tokens: tokens, // لازم تكون Array فيها قيم
         };
         const response = await firebase_1.messaging.sendEachForMulticast(message);
+        // 6️⃣ الرد النهائي
         res.json({
             success: true,
             message: "Notification sent successfully",
+            results: {
+                successCount: response.successCount,
+                failureCount: response.failureCount,
+                responses: response.responses, // 👈 تفاصيل كل توكن
+            },
         });
     }
     catch (error) {
-        // لو انت عامل Middleware للتعامل مع الأخطاء، مجرد رمي الخطأ كافي
+        // لو عامل Middleware للأخطاء، ارمي الخطأ
         throw error;
     }
 };

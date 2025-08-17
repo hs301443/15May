@@ -12,7 +12,6 @@ import { SuccessResponse } from "../../utils/response";
 
 export const sendNotificationToAll = async (req: Request, res: Response) => {
   try {
-    
     const { title, body } = req.body;
 
     // ✅ تحقق من المدخلات
@@ -20,54 +19,56 @@ export const sendNotificationToAll = async (req: Request, res: Response) => {
       throw new BadRequest("Title and body are required");
     }
 
-    // 1️⃣ جلب كل المستخدمين (مع الـ id بتاعهم)
-const allUsers = await db
-  .select({ id: users.id })
-  .from(users);
+    // 1️⃣ جلب كل المستخدمين
+    const allUsers = await db.select({ id: users.id }).from(users);
 
-// 2️⃣ تجهيز الإشعارات لكل المستخدمين
-const notificationsData = allUsers.map(user => ({
-  id: uuidv4(),
-  title,
-  body,
-  status: "unseen",
-  userId: user.id, // لكل مستخدم
-}));
+    // 2️⃣ تجهيز الإشعارات لكل المستخدمين
+    const notificationsData = allUsers.map((user) => ({
+      id: uuidv4(),
+      title,
+      body,
+      status: "unseen",
+      userId: user.id,
+    }));
 
-// 3️⃣ إدخال كل الإشعارات مرة واحدة
-await db.insert(notifications).values(notificationsData);
+    // 3️⃣ إدخال كل الإشعارات مرة واحدة
+    await db.insert(notifications).values(notificationsData);
 
-    // 2️⃣ جلب التوكنات من جدول users
+    // 4️⃣ جلب التوكنات من جدول users
     const result = await db
       .select({ token: users.fcmtoken })
       .from(users)
       .where(isNotNull(users.fcmtoken));
 
-    const tokens = result.map(row => row.token).filter(Boolean) as string[];
+    const tokens = result.map((row) => row.token).filter(Boolean) as string[];
 
     if (!tokens.length) {
       throw new NotFound("No FCM tokens found");
     }
 
-    // 3️⃣ إرسال الإشعار عبر Firebase
+    // 5️⃣ إرسال الإشعار عبر Firebase
     const message = {
       notification: { title, body },
-      tokens
+      tokens: tokens, // لازم تكون Array فيها قيم
     };
 
     const response = await messaging.sendEachForMulticast(message);
 
+    // 6️⃣ الرد النهائي
     res.json({
       success: true,
       message: "Notification sent successfully",
+      results: {
+        successCount: response.successCount,
+        failureCount: response.failureCount,
+        responses: response.responses, // 👈 تفاصيل كل توكن
+      },
     });
-
   } catch (error) {
-    // لو انت عامل Middleware للتعامل مع الأخطاء، مجرد رمي الخطأ كافي
+    // لو عامل Middleware للأخطاء، ارمي الخطأ
     throw error;
   }
 };
-
 export const getAllNotifications = async (req: Request, res: Response) => {
   const data = await db.select().from(notifications);
 
