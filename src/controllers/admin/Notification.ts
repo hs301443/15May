@@ -19,14 +19,14 @@ export const sendNotificationToAll = async (req: Request, res: Response) => {
       throw new BadRequest("Title and body are required");
     }
 
-    // 1️⃣ إنشاء Notification واحد فقط
+    // 1️⃣ إنشاء Notification واحد فقط للجميع
     const notificationId = uuidv4();
     await db.insert(notifications).values({
       id: notificationId,
+      userId: "BROADCAST", 
       title,
       body,
       status: "unseen",
-      userId: "all", // null يعني للجميع
     });
 
     // 2️⃣ جلب كل التوكنات
@@ -53,6 +53,7 @@ export const sendNotificationToAll = async (req: Request, res: Response) => {
     res.json({
       success: true,
       message: "Notification sent successfully",
+      notificationId, // إرجاع معرف الإشعار
       results: {
         successCount: response.successCount,
         failureCount: response.failureCount,
@@ -63,6 +64,7 @@ export const sendNotificationToAll = async (req: Request, res: Response) => {
     throw error;
   }
 };
+
 export const getAllNotifications = async (req: Request, res: Response): Promise<void> => {
   const data = await db.select().from(notifications);
 

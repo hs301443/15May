@@ -18,14 +18,14 @@ const sendNotificationToAll = async (req, res) => {
         if (!title || !body) {
             throw new BadRequest_1.BadRequest("Title and body are required");
         }
-        // 1️⃣ إنشاء Notification واحد فقط
+        // 1️⃣ إنشاء Notification واحد فقط للجميع
         const notificationId = (0, uuid_1.v4)();
         await db_1.db.insert(schema_1.notifications).values({
             id: notificationId,
+            userId: "BROADCAST",
             title,
             body,
             status: "unseen",
-            userId: "all", // null يعني للجميع
         });
         // 2️⃣ جلب كل التوكنات
         const result = await db_1.db
@@ -46,6 +46,7 @@ const sendNotificationToAll = async (req, res) => {
         res.json({
             success: true,
             message: "Notification sent successfully",
+            notificationId, // إرجاع معرف الإشعار
             results: {
                 successCount: response.successCount,
                 failureCount: response.failureCount,
