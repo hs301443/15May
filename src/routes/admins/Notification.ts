@@ -4,13 +4,14 @@ import { sendNotificationToAll, getAllNotifications,getNotificationById,deleteNo
 import { createNotificationSchema,updateNotificationSchema } from '../../validators/admin/notification';
 import { validate } from '../../middlewares/validation';
 import { catchAsync } from '../../utils/catchAsync';
+import { authorizeRoles } from '../../middlewares/authorized';
 
 const router = Router();
 
-router.post('/send', authenticated, validate(createNotificationSchema), catchAsync(sendNotificationToAll));
-router.get('/', authenticated, catchAsync(getAllNotifications));
-router.get('/:id', authenticated, catchAsync(getNotificationById));
-router.put('/:id', authenticated, validate(updateNotificationSchema), catchAsync(updateNotification));
-router.delete('/:id', authenticated, catchAsync(deleteNotification));
+router.post('/send', authorizeRoles('admin'), validate(createNotificationSchema), catchAsync(sendNotificationToAll));
+router.get('/', authorizeRoles('admin'), catchAsync(getAllNotifications));
+router.get('/:id', authorizeRoles('admin'), catchAsync(getNotificationById));
+router.put('/:id', authorizeRoles('admin'), validate(updateNotificationSchema), catchAsync(updateNotification));
+router.delete('/:id', authorizeRoles('admin'), catchAsync(deleteNotification));
 
 export default router;

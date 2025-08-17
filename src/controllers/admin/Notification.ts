@@ -69,6 +69,7 @@ export const sendNotificationToAll = async (req: Request, res: Response) => {
     throw error;
   }
 };
+
 export const getAllNotifications = async (req: Request, res: Response) => {
   const data = await db.select().from(notifications);
 
