@@ -19,22 +19,17 @@ export const sendNotificationToAll = async (req: Request, res: Response) => {
       throw new BadRequest("Title and body are required");
     }
 
-    // 1️⃣ جلب كل المستخدمين
-    const allUsers = await db.select({ id: users.id }).from(users);
-
-    // 2️⃣ تجهيز الإشعارات لكل المستخدمين
-    const notificationsData = allUsers.map((user) => ({
-      id: uuidv4(),
+    // 1️⃣ إنشاء Notification واحد فقط
+    const notificationId = uuidv4();
+    await db.insert(notifications).values({
+      id: notificationId,
       title,
       body,
       status: "unseen",
-      userId: user.id,
-    }));
+      userId: "all", // null يعني للجميع
+    });
 
-    // 3️⃣ إدخال كل الإشعارات مرة واحدة
-    await db.insert(notifications).values(notificationsData);
-
-    // 4️⃣ جلب التوكنات من جدول users
+    // 2️⃣ جلب كل التوكنات
     const result = await db
       .select({ token: users.fcmtoken })
       .from(users)
@@ -46,67 +41,36 @@ export const sendNotificationToAll = async (req: Request, res: Response) => {
       throw new NotFound("No FCM tokens found");
     }
 
-    // 5️⃣ إرسال الإشعار عبر Firebase
+    // 3️⃣ إرسال الإشعار عبر Firebase
     const message = {
       notification: { title, body },
-      tokens: tokens, // لازم تكون Array فيها قيم
+      tokens: tokens,
     };
 
     const response = await messaging.sendEachForMulticast(message);
 
-    // 6️⃣ الرد النهائي
+    // 4️⃣ الرد النهائي
     res.json({
       success: true,
       message: "Notification sent successfully",
       results: {
         successCount: response.successCount,
         failureCount: response.failureCount,
-        responses: response.responses, // 👈 تفاصيل كل توكن
+        responses: response.responses,
       },
     });
   } catch (error) {
-    // لو عامل Middleware للأخطاء، ارمي الخطأ
     throw error;
   }
 };
-
-// ✅ Get all notifications (admin)
 export const getAllNotifications = async (req: Request, res: Response): Promise<void> => {
-  try {
-    console.log("Fetching all notifications from DB...");
+  const data = await db.select().from(notifications);
 
-    const data = await db.select().from(notifications);
-
-    console.log("Result from DB:", data);
-
-    if (!data || data.length === 0) {
-      console.log("No notifications found!");
-      res.status(404).json({
-        success: false,
-        error: { code: 404, message: "Notification not found" },
-      });
-      return;
-    }
-
-    console.log(`Found ${data.length} notifications.`);
-    res.status(200).json({
-      success: true,
-      data,
-    });
-  } catch (err) {
-    console.error("Error fetching notifications:", err);
-    res.status(500).json({
-      success: false,
-      error: { code: 500, message: "Server error" },
-    });
-  }
+  SuccessResponse(res, { data }, 200); // من غير return
 };
 
-
-
-// ✅ Get notification by id
 export const getNotificationById = async (req: Request, res: Response): Promise<void> => {
-  const { id } = req.params; 
+  const { id } = req.params;       
 
   const data = await db
     .select()

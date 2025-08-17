@@ -18,19 +18,16 @@ const sendNotificationToAll = async (req, res) => {
         if (!title || !body) {
             throw new BadRequest_1.BadRequest("Title and body are required");
         }
-        // 1️⃣ جلب كل المستخدمين
-        const allUsers = await db_1.db.select({ id: schema_2.users.id }).from(schema_2.users);
-        // 2️⃣ تجهيز الإشعارات لكل المستخدمين
-        const notificationsData = allUsers.map((user) => ({
-            id: (0, uuid_1.v4)(),
+        // 1️⃣ إنشاء Notification واحد فقط
+        const notificationId = (0, uuid_1.v4)();
+        await db_1.db.insert(schema_1.notifications).values({
+            id: notificationId,
             title,
             body,
             status: "unseen",
-            userId: user.id,
-        }));
-        // 3️⃣ إدخال كل الإشعارات مرة واحدة
-        await db_1.db.insert(schema_1.notifications).values(notificationsData);
-        // 4️⃣ جلب التوكنات من جدول users
+            userId: "all", // null يعني للجميع
+        });
+        // 2️⃣ جلب كل التوكنات
         const result = await db_1.db
             .select({ token: schema_2.users.fcmtoken })
             .from(schema_2.users)
@@ -39,37 +36,33 @@ const sendNotificationToAll = async (req, res) => {
         if (!tokens.length) {
             throw new NotFound_1.NotFound("No FCM tokens found");
         }
-        // 5️⃣ إرسال الإشعار عبر Firebase
+        // 3️⃣ إرسال الإشعار عبر Firebase
         const message = {
             notification: { title, body },
-            tokens: tokens, // لازم تكون Array فيها قيم
+            tokens: tokens,
         };
         const response = await firebase_1.messaging.sendEachForMulticast(message);
-        // 6️⃣ الرد النهائي
+        // 4️⃣ الرد النهائي
         res.json({
             success: true,
             message: "Notification sent successfully",
             results: {
                 successCount: response.successCount,
                 failureCount: response.failureCount,
-                responses: response.responses, // 👈 تفاصيل كل توكن
+                responses: response.responses,
             },
         });
     }
     catch (error) {
-        // لو عامل Middleware للأخطاء، ارمي الخطأ
         throw error;
     }
 };
 exports.sendNotificationToAll = sendNotificationToAll;
-// ✅ Get all notifications (admin)
 const getAllNotifications = async (req, res) => {
     const data = await db_1.db.select().from(schema_1.notifications);
-    console.log("All notifications:", data); // هنا نشوف إذا فعلاً في بيانات
-    (0, response_1.SuccessResponse)(res, { data }, 200);
+    (0, response_1.SuccessResponse)(res, { data }, 200); // من غير return
 };
 exports.getAllNotifications = getAllNotifications;
-// ✅ Get notification by id
 const getNotificationById = async (req, res) => {
     const { id } = req.params;
     const data = await db_1.db
