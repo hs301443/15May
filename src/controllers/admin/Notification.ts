@@ -17,6 +17,7 @@ export const sendNotificationToAll = async (req: Request, res: Response) => {
     throw new BadRequest("Title and body are required");
   }
 
+  // 1. حفظ الإشعار في جدول notifications
   const newNotificationId = uuidv4();
   await db.insert(notifications).values({
     id: newNotificationId,
@@ -24,6 +25,7 @@ export const sendNotificationToAll = async (req: Request, res: Response) => {
     body,
   });
 
+  // 2. ربط الإشعار بكل المستخدمين
   const allUsers = await db.select({ id: users.id }).from(users);
 
   if (!allUsers.length) {
@@ -35,17 +37,20 @@ export const sendNotificationToAll = async (req: Request, res: Response) => {
     userId: user.id,
     notificationId: newNotificationId,
     status: "unseen" as const,
-    createdAt: new Date()
+    createdAt: new Date(),
   }));
 
   await db.insert(userNotifications).values(userNotificationsData);
 
+  // 3. جلب كل الـ FCM tokens
   const result = await db
     .select({ token: users.fcmtoken })
     .from(users)
     .where(isNotNull(users.fcmtoken));
 
-  const tokens = result.map(row => row.token).filter(Boolean) as string[];
+  const tokens = result
+    .map(row => row.token)
+    .filter(Boolean) as string[];
 
   if (!tokens.length) {
     res.json({
@@ -55,22 +60,28 @@ export const sendNotificationToAll = async (req: Request, res: Response) => {
     return;
   }
 
+  // 4. إرسال الإشعار لكل التوكنات
   const message = {
     notification: { title, body },
     tokens,
   };
 
-  const response = await messaging.sendEachForMulticast(message);
+  try {
+    const response = await messaging.sendEachForMulticast(message);
 
-  res.json({
-    success: true,
-    message: "Notification sent successfully",
-    results: {
-      successCount: response.successCount,
-      failureCount: response.failureCount,
-    },
-  });
+    res.json({
+      success: true,
+      message: "Notification sent successfully",
+      results: {
+        successCount: response.successCount,
+        failureCount: response.failureCount,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "FCM sending error", error: err });
+  }
 };
+
 
 
 // ✅ Get All
