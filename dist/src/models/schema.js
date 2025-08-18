@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.notifications = exports.sliderImages = exports.sliders = exports.popUpsPages = exports.popUpsImages = exports.appPages = exports.userCompetition = exports.competitionsImages = exports.competitions = exports.complaints = exports.complaintsCategory = exports.reacts = exports.postsImages = exports.posts = exports.postsCategory = exports.userVotesItems = exports.userVotes = exports.votesItems = exports.votes = exports.emailVerifications = exports.users = exports.admins = exports.popUpsStatus = exports.userRoles = exports.userStatusEnum = void 0;
+exports.userNotifications = exports.notifications = exports.sliderImages = exports.sliders = exports.popUpsPages = exports.popUpsImages = exports.appPages = exports.userCompetition = exports.competitionsImages = exports.competitions = exports.complaints = exports.complaintsCategory = exports.reacts = exports.postsImages = exports.posts = exports.postsCategory = exports.userVotesItems = exports.userVotes = exports.votesItems = exports.votes = exports.emailVerifications = exports.users = exports.admins = exports.popUpsStatus = exports.userRoles = exports.userStatusEnum = void 0;
 const mysql_core_1 = require("drizzle-orm/mysql-core");
 // ENUMS
 exports.userStatusEnum = ["pending", "approved", "rejected"];
@@ -189,11 +189,18 @@ exports.sliderImages = (0, mysql_core_1.mysqlTable)("slider_images", {
 });
 exports.notifications = (0, mysql_core_1.mysqlTable)("notifications", {
     id: (0, mysql_core_1.varchar)("id", { length: 36 }).primaryKey(),
+    title: (0, mysql_core_1.varchar)("title", { length: 255 }).notNull(),
+    body: (0, mysql_core_1.text)("body").notNull(),
+    createdAt: (0, mysql_core_1.timestamp)("created_at").defaultNow(),
+});
+exports.userNotifications = (0, mysql_core_1.mysqlTable)("user_notifications", {
+    id: (0, mysql_core_1.varchar)("id", { length: 36 }).primaryKey(),
     userId: (0, mysql_core_1.varchar)("user_id", { length: 36 })
         .notNull()
         .references(() => exports.users.id),
-    title: (0, mysql_core_1.varchar)("title", { length: 255 }).notNull(),
-    body: (0, mysql_core_1.text)("body").notNull(),
-    status: (0, mysql_core_1.varchar)("status", { length: 20 }).default("unseen"), // unseen / seen
+    notificationId: (0, mysql_core_1.varchar)("notification_id", { length: 36 })
+        .notNull()
+        .references(() => exports.notifications.id),
+    status: (0, mysql_core_1.mysqlEnum)(["unseen", "seen"]).default("unseen").notNull(),
     createdAt: (0, mysql_core_1.timestamp)("created_at").defaultNow(),
 });

@@ -10,27 +10,19 @@ const BadRequest_1 = require("../../Errors/BadRequest");
 const NotFound_1 = require("../../Errors/NotFound");
 const uuid_1 = require("uuid");
 const drizzle_orm_2 = require("drizzle-orm");
-const response_1 = require("../../utils/response");
 const sendNotificationToAll = async (req, res) => {
     try {
         const { title, body } = req.body;
-        // ✅ تحقق من المدخلات
         if (!title || !body) {
             throw new BadRequest_1.BadRequest("Title and body are required");
         }
-        // 1️⃣ جلب كل المستخدمين
-        const allUsers = await db_1.db.select({ id: schema_2.users.id }).from(schema_2.users);
-        // 2️⃣ تجهيز الإشعارات لكل المستخدمين
-        const notificationsData = allUsers.map((user) => ({
+        // 🟢 إضافة إشعار واحد فقط
+        await db_1.db.insert(schema_1.notifications).values({
             id: (0, uuid_1.v4)(),
             title,
             body,
-            status: "unseen",
-            userId: user.id,
-        }));
-        // 3️⃣ إدخال كل الإشعارات مرة واحدة
-        await db_1.db.insert(schema_1.notifications).values(notificationsData);
-        // 4️⃣ جلب التوكنات من جدول users
+        });
+        // 🟢 جلب كل التوكنات
         const result = await db_1.db
             .select({ token: schema_2.users.fcmtoken })
             .from(schema_2.users)
@@ -39,51 +31,49 @@ const sendNotificationToAll = async (req, res) => {
         if (!tokens.length) {
             throw new NotFound_1.NotFound("No FCM tokens found");
         }
-        // 5️⃣ إرسال الإشعار عبر Firebase
+        // 🟢 إرسال عبر Firebase
         const message = {
             notification: { title, body },
-            tokens: tokens, // لازم تكون Array فيها قيم
+            tokens,
         };
         const response = await firebase_1.messaging.sendEachForMulticast(message);
-        // 6️⃣ الرد النهائي
         res.json({
             success: true,
             message: "Notification sent successfully",
             results: {
                 successCount: response.successCount,
                 failureCount: response.failureCount,
-                responses: response.responses, // 👈 تفاصيل كل توكن
             },
         });
     }
     catch (error) {
-        // لو عامل Middleware للأخطاء، ارمي الخطأ
         throw error;
     }
 };
 exports.sendNotificationToAll = sendNotificationToAll;
+// ✅ Get All
 const getAllNotifications = async (req, res) => {
-    const data = await db_1.db.select().from(schema_1.notifications);
-    (0, response_1.SuccessResponse)(res, { data }, 200); // من غير return
+    const data = await db_1.db
+        .select()
+        .from(schema_1.notifications)
+        .orderBy((0, drizzle_orm_2.desc)(schema_1.notifications.createdAt));
+    res.json({ success: true, data });
 };
 exports.getAllNotifications = getAllNotifications;
+// ✅ Get by ID
 const getNotificationById = async (req, res) => {
     const { id } = req.params;
     const data = await db_1.db
         .select()
         .from(schema_1.notifications)
         .where((0, drizzle_orm_2.eq)(schema_1.notifications.id, id));
-    console.log("Result from DB:", data);
     if (!data.length) {
         throw new NotFound_1.NotFound("Notification not found");
     }
-    res.json({
-        success: true,
-        data: data[0],
-    });
+    res.json({ success: true, data: data[0] });
 };
 exports.getNotificationById = getNotificationById;
-// 📌 4. تحديث إشعار
+// ✅ Update
 const updateNotification = async (req, res) => {
     const { id } = req.params;
     const { title, body } = req.body;
@@ -104,11 +94,11 @@ const updateNotification = async (req, res) => {
     res.json({
         success: true,
         message: "Notification updated successfully",
-        data: { ...existing[0], title, body }
+        data: { ...existing[0], title, body },
     });
 };
 exports.updateNotification = updateNotification;
-// 📌 5. حذف إشعار
+// ✅ Delete
 const deleteNotification = async (req, res) => {
     const { id } = req.params;
     const existing = await db_1.db
@@ -118,12 +108,10 @@ const deleteNotification = async (req, res) => {
     if (!existing.length) {
         throw new NotFound_1.NotFound("Notification not found");
     }
-    await db_1.db
-        .delete(schema_1.notifications)
-        .where((0, drizzle_orm_2.eq)(schema_1.notifications.id, id));
+    await db_1.db.delete(schema_1.notifications).where((0, drizzle_orm_2.eq)(schema_1.notifications.id, id));
     res.json({
         success: true,
-        message: "Notification deleted successfully"
+        message: "Notification deleted successfully",
     });
 };
 exports.deleteNotification = deleteNotification;
