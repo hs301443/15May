@@ -17,6 +17,7 @@ export const sendNotificationToAll = async (req: Request, res: Response) => {
     throw new BadRequest("Title and body are required");
   }
 
+  // إنشاء إشعار جديد في قاعدة البيانات
   const newNotificationId = uuidv4();
   await db.insert(notifications).values({
     id: newNotificationId,
@@ -24,51 +25,57 @@ export const sendNotificationToAll = async (req: Request, res: Response) => {
     body,
   });
 
-  const allUsers = await db.select({ id: users.id }).from(users);
+  // جلب كل المستخدمين
+  const allUsers = await db.select({ id: users.id, token: users.fcmtoken }).from(users);
 
   if (!allUsers.length) {
     throw new NotFound("No users found");
   }
 
+  // تجهيز بيانات user_notifications
   const userNotificationsData = allUsers.map(user => ({
     id: uuidv4(),
     userId: user.id,
     notificationId: newNotificationId,
     status: "unseen" as const,
-    createdAt: new Date()
+    createdAt: new Date(),
   }));
-
   await db.insert(userNotifications).values(userNotificationsData);
 
-  const result = await db
-    .select({ token: users.fcmtoken })
-    .from(users)
-    .where(isNotNull(users.fcmtoken));
-
-  const tokens = result.map(row => row.token).filter(Boolean) as string[];
+  // جمع كل التوكنات الصالحة
+  const tokens = allUsers
+    .map(u => u.token)
+    .filter(Boolean) as string[];
 
   if (!tokens.length) {
     res.json({
       success: true,
-      message: "Notification saved but no FCM tokens found",
+      message: "Notification saved but no valid FCM tokens found",
     });
     return;
   }
 
-  const message = {
-    notification: { title, body },
-    tokens,
-  };
+  // تقسيم التوكنات في دفعات لو كبيرة
+  const BATCH_SIZE = 500; // FCM يسمح حتى 500 توكن للدفعة الواحدة
+  let successCount = 0;
+  let failureCount = 0;
 
-  const response = await messaging.sendEachForMulticast(message);
+  for (let i = 0; i < tokens.length; i += BATCH_SIZE) {
+    const batchTokens = tokens.slice(i, i + BATCH_SIZE);
+    const message = {
+      notification: { title, body },
+      tokens: batchTokens,
+    };
+    const response = await messaging.sendEachForMulticast(message);
+
+    successCount += response.successCount;
+    failureCount += response.failureCount;
+  }
 
   res.json({
     success: true,
     message: "Notification sent successfully",
-    results: {
-      successCount: response.successCount,
-      failureCount: response.failureCount,
-    },
+    results: { successCount, failureCount },
   });
 };
 
