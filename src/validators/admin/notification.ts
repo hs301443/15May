@@ -10,5 +10,8 @@ export const updateNotificationSchema = z.object({
     body: z.object({    
         title: z.string().min(1, "Title is required").optional(),
         body: z.string().min(1, "Body is required").optional(),
+    }).refine(data => data.title || data.body, {
+        message: "At least one field (title or body) must be provided for update",
     }),
+    
 });
