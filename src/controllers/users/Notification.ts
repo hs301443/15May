@@ -1,69 +1,79 @@
 import { Request, Response } from "express";
-import { notifications } from "../../models/schema";
+import { notifications,userNotifications  } from "../../models/schema";
 import { db } from "../../models/db";
 import { UnauthorizedError } from "../../Errors";
 import { NotFound } from "../../Errors/NotFound";
-import { eq,and } from "drizzle-orm";
+import { eq,and,desc } from "drizzle-orm";
 
-export const getAllNotifications = async (req:Request, res:Response) => {
-  if (!req.user?.id) {
-    throw new UnauthorizedError("User not authenticated");
-  }
+// 📌 1. جلب كل الإشعارات الخاصة باليوزر
+export const getAllNotifications = async (req: Request, res: Response) => {
+  if (!req.user?.id) throw new UnauthorizedError("User not authenticated");
+
   const userId = req.user.id;
 
   const allNotifications = await db
-    .select()
-    .from(notifications)
-    .where(eq(notifications.userId, userId))
-    .orderBy(notifications.createdAt);
+    .select({
+      id: userNotifications.id,
+      status: userNotifications.status,
+      createdAt: userNotifications.createdAt,
+      title: notifications.title,
+      body: notifications.body,
+    })
+    .from(userNotifications)
+    .innerJoin(notifications, eq(userNotifications.notificationId, notifications.id))
+    .where(eq(userNotifications.userId, userId))
+    .orderBy(desc(userNotifications.createdAt));
 
+  // ✅ بعد ما يجيبهم، يغيّر الحالات لـ seen
   await db
-    .update(notifications)
+    .update(userNotifications)
     .set({ status: "seen" })
-    .where(and(eq(notifications.userId, userId), eq(notifications.status, "unseen")));
+    .where(and(eq(userNotifications.userId, userId), eq(userNotifications.status, "unseen")));
 
   res.json({ notifications: allNotifications });
 };
 
-// ✅ جلب عدد النوتيفيكيشنز الغير مقروءة
-export const getUnseenCount =(async (req:Request, res:Response) => {
-  if (!req.user?.id) {
-    throw new UnauthorizedError("User not authenticated");
-  }
+// 📌 2. جلب عدد الإشعارات الغير مقروءة
+export const getUnseenCount = async (req: Request, res: Response) => {
+  if (!req.user?.id) throw new UnauthorizedError("User not authenticated");
+
   const userId = req.user.id;
 
   const unseen = await db
     .select()
-    .from(notifications)
-    .where(and(eq(notifications.userId, userId), eq(notifications.status, "unseen")));
+    .from(userNotifications)
+    .where(and(eq(userNotifications.userId, userId), eq(userNotifications.status, "unseen")));
 
   res.json({ unseenCount: unseen.length });
-});
+};
 
-
-// ✅ جلب رسالة واحدة وتحويلها إلى seen لو كانت unseen
+// 📌 3. جلب إشعار واحد + تحديث حالته لو كان unseen
 export const getNotificationById = async (req: Request, res: Response) => {
-   if (!req.user?.id) {
-    throw new UnauthorizedError("User not authenticated");
-  }
+  if (!req.user?.id) throw new UnauthorizedError("User not authenticated");
+
   const userId = req.user.id;
   const { id } = req.params;
 
   const notif = await db
-    .select()
-    .from(notifications)
-    .where(and(eq(notifications.id, id), eq(notifications.userId, userId)));
+    .select({
+      id: userNotifications.id,
+      status: userNotifications.status,
+      createdAt: userNotifications.createdAt,
+      title: notifications.title,
+      body: notifications.body,
+    })
+    .from(userNotifications)
+    .innerJoin(notifications, eq(userNotifications.notificationId, notifications.id))
+    .where(and(eq(userNotifications.id, id), eq(userNotifications.userId, userId)));
 
-  if (!notif.length) {
-    throw new NotFound("Notification not found");
-  }
+  if (!notif.length) throw new NotFound("Notification not found");
 
   if (notif[0].status === "unseen") {
     await db
-      .update(notifications)
+      .update(userNotifications)
       .set({ status: "seen" })
-      .where(eq(notifications.id, id));
+      .where(eq(userNotifications.id, id));
   }
 
   res.json(notif[0]);
-};  
+};

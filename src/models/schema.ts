@@ -227,11 +227,19 @@ export const sliderImages = mysqlTable("slider_images", {
 
 export const notifications= mysqlTable("notifications", {
   id: varchar("id", { length: 36 }).primaryKey(),
-  userId:varchar("user_id", { length: 36 })
-    .notNull()
-    .references(() => users.id),
   title: varchar("title", { length: 255 }).notNull(),
   body: text("body").notNull(),
-  status: varchar("status", { length: 20 }).default("unseen"), // unseen / seen
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const userNotifications = mysqlTable("user_notifications", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  userId: varchar("user_id", { length: 36 })
+    .notNull()
+    .references(() => users.id),
+  notificationId: varchar("notification_id", { length: 36 })
+    .notNull()
+    .references(() => notifications.id),
+  status: mysqlEnum(["unseen", "seen"]).default("unseen").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });

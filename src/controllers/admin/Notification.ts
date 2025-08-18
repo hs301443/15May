@@ -7,34 +7,25 @@ import { isNotNull } from "drizzle-orm";
 import { BadRequest } from "../../Errors/BadRequest";
 import { NotFound } from "../../Errors/NotFound";
 import { v4 as uuidv4 } from "uuid";
-import { eq } from "drizzle-orm";
+import { eq ,desc} from "drizzle-orm";
 import { SuccessResponse } from "../../utils/response";
 
 export const sendNotificationToAll = async (req: Request, res: Response) => {
   try {
     const { title, body } = req.body;
 
-    // ✅ تحقق من المدخلات
     if (!title || !body) {
       throw new BadRequest("Title and body are required");
     }
 
-    // 1️⃣ جلب كل المستخدمين
-    const allUsers = await db.select({ id: users.id }).from(users);
-
-    // 2️⃣ تجهيز الإشعارات لكل المستخدمين
-    const notificationsData = allUsers.map((user) => ({
+    // 🟢 إضافة إشعار واحد فقط
+    await db.insert(notifications).values({
       id: uuidv4(),
       title,
       body,
-      status: "unseen",
-      userId: user.id,
-    }));
+    });
 
-    // 3️⃣ إدخال كل الإشعارات مرة واحدة
-    await db.insert(notifications).values(notificationsData);
-
-    // 4️⃣ جلب التوكنات من جدول users
+    // 🟢 جلب كل التوكنات
     const result = await db
       .select({ token: users.fcmtoken })
       .from(users)
@@ -46,58 +37,54 @@ export const sendNotificationToAll = async (req: Request, res: Response) => {
       throw new NotFound("No FCM tokens found");
     }
 
-    // 5️⃣ إرسال الإشعار عبر Firebase
+    // 🟢 إرسال عبر Firebase
     const message = {
       notification: { title, body },
-      tokens: tokens, // لازم تكون Array فيها قيم
+      tokens,
     };
 
     const response = await messaging.sendEachForMulticast(message);
 
-    // 6️⃣ الرد النهائي
     res.json({
       success: true,
       message: "Notification sent successfully",
       results: {
         successCount: response.successCount,
         failureCount: response.failureCount,
-        responses: response.responses, // 👈 تفاصيل كل توكن
       },
     });
   } catch (error) {
-    // لو عامل Middleware للأخطاء، ارمي الخطأ
     throw error;
   }
 };
 
-export const getAllNotifications = async (req: Request, res: Response): Promise<void> => {
-  const data = await db.select().from(notifications);
+// ✅ Get All
+export const getAllNotifications = async (req: Request, res: Response) => {
+  const data = await db
+    .select()
+    .from(notifications)
+    .orderBy(desc(notifications.createdAt));
 
-  SuccessResponse(res, { data }, 200); // من غير return
+  res.json({ success: true, data });
 };
 
-export const getNotificationById = async (req: Request, res: Response): Promise<void> => {
-  const { id } = req.params;       
+// ✅ Get by ID
+export const getNotificationById = async (req: Request, res: Response) => {
+  const { id } = req.params;
 
   const data = await db
     .select()
     .from(notifications)
     .where(eq(notifications.id, id));
 
-  console.log("Result from DB:", data);
-
   if (!data.length) {
     throw new NotFound("Notification not found");
   }
 
-  res.json({
-    success: true,
-    data: data[0],
-  });
+  res.json({ success: true, data: data[0] });
 };
 
-
-// 📌 4. تحديث إشعار
+// ✅ Update
 export const updateNotification = async (req: Request, res: Response) => {
   const { id } = req.params;
   const { title, body } = req.body;
@@ -123,11 +110,11 @@ export const updateNotification = async (req: Request, res: Response) => {
   res.json({
     success: true,
     message: "Notification updated successfully",
-    data: { ...existing[0], title, body }
+    data: { ...existing[0], title, body },
   });
 };
 
-// 📌 5. حذف إشعار
+// ✅ Delete
 export const deleteNotification = async (req: Request, res: Response) => {
   const { id } = req.params;
 
@@ -140,12 +127,10 @@ export const deleteNotification = async (req: Request, res: Response) => {
     throw new NotFound("Notification not found");
   }
 
-  await db
-    .delete(notifications)
-    .where(eq(notifications.id, id));
+  await db.delete(notifications).where(eq(notifications.id, id));
 
   res.json({
     success: true,
-    message: "Notification deleted successfully"
+    message: "Notification deleted successfully",
   });
 };
