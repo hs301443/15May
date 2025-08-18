@@ -14,7 +14,7 @@ export const updateNotificationSchema = z.object({
     (data) => data.title !== undefined || data.body !== undefined,
     {
       message: "You must provide at least one field to update (title or body)",
-      path: ["title"], // ممكن تخليها ["body"] أو تسيبها فاضية
+      path: ["title"], 
     }
   ),
 })
