@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { messaging } from "../../utils/firebase";
-import { notifications } from "../../models/schema";
+import { notifications, userNotifications } from "../../models/schema";
 import { users } from "../../models/schema";
 import { db } from "../../models/db";
 import { isNotNull } from "drizzle-orm";
@@ -11,52 +11,67 @@ import { eq ,desc} from "drizzle-orm";
 import { SuccessResponse } from "../../utils/response";
 
 export const sendNotificationToAll = async (req: Request, res: Response) => {
-  try {
-    const { title, body } = req.body;
+  const { title, body } = req.body;
 
-    if (!title || !body) {
-      throw new BadRequest("Title and body are required");
-    }
+  if (!title || !body) {
+    throw new BadRequest("Title and body are required");
+  }
 
-    // 🟢 إضافة إشعار واحد فقط
-    await db.insert(notifications).values({
-      id: uuidv4(),
-      title,
-      body,
-    });
+  const newNotificationId = uuidv4();
+  await db.insert(notifications).values({
+    id: newNotificationId,
+    title,
+    body,
+  });
 
-    // 🟢 جلب كل التوكنات
-    const result = await db
-      .select({ token: users.fcmtoken })
-      .from(users)
-      .where(isNotNull(users.fcmtoken));
+  const allUsers = await db.select({ id: users.id }).from(users);
 
-    const tokens = result.map((row) => row.token).filter(Boolean) as string[];
+  if (!allUsers.length) {
+    throw new NotFound("No users found");
+  }
 
-    if (!tokens.length) {
-      throw new NotFound("No FCM tokens found");
-    }
+  const userNotificationsData = allUsers.map(user => ({
+    id: uuidv4(),
+    userId: user.id,
+    notificationId: newNotificationId,
+    status: "unseen" as const,
+    createdAt: new Date()
+  }));
 
-    // 🟢 إرسال عبر Firebase
-    const message = {
-      notification: { title, body },
-      tokens,
-    };
+  await db.insert(userNotifications).values(userNotificationsData);
 
-    const response = await messaging.sendEachForMulticast(message);
+  const result = await db
+    .select({ token: users.fcmtoken })
+    .from(users)
+    .where(isNotNull(users.fcmtoken));
 
+  const tokens = result.map(row => row.token).filter(Boolean) as string[];
+
+  if (!tokens.length) {
     res.json({
       success: true,
-      message: "Notification sent successfully",
-      results: {
-        successCount: response.successCount,
-        failureCount: response.failureCount,
-      },
+      message: "Notification saved but no FCM tokens found",
     });
-  } catch (error) {
-    throw error;
+    return;
   }
+
+  const message = {
+    notification: { title, body },
+    tokens,
+  };
+
+  const response = await messaging.sendEachForMulticast(message);
+
+  res.json({
+    success: true,
+    message: "Notification sent successfully",
+    results: {
+      successCount: response.successCount,
+      failureCount: response.failureCount,
+    },
+  });
 };
+
 
 // ✅ Get All
 export const getAllNotifications = async (req: Request, res: Response) => {
