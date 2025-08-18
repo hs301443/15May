@@ -11,44 +11,53 @@ const NotFound_1 = require("../../Errors/NotFound");
 const uuid_1 = require("uuid");
 const drizzle_orm_2 = require("drizzle-orm");
 const sendNotificationToAll = async (req, res) => {
-    try {
-        const { title, body } = req.body;
-        if (!title || !body) {
-            throw new BadRequest_1.BadRequest("Title and body are required");
-        }
-        // 🟢 إضافة إشعار واحد فقط
-        await db_1.db.insert(schema_1.notifications).values({
-            id: (0, uuid_1.v4)(),
-            title,
-            body,
-        });
-        // 🟢 جلب كل التوكنات
-        const result = await db_1.db
-            .select({ token: schema_2.users.fcmtoken })
-            .from(schema_2.users)
-            .where((0, drizzle_orm_1.isNotNull)(schema_2.users.fcmtoken));
-        const tokens = result.map((row) => row.token).filter(Boolean);
-        if (!tokens.length) {
-            throw new NotFound_1.NotFound("No FCM tokens found");
-        }
-        // 🟢 إرسال عبر Firebase
-        const message = {
-            notification: { title, body },
-            tokens,
-        };
-        const response = await firebase_1.messaging.sendEachForMulticast(message);
+    const { title, body } = req.body;
+    if (!title || !body) {
+        throw new BadRequest_1.BadRequest("Title and body are required");
+    }
+    const newNotificationId = (0, uuid_1.v4)();
+    await db_1.db.insert(schema_1.notifications).values({
+        id: newNotificationId,
+        title,
+        body,
+    });
+    const allUsers = await db_1.db.select({ id: schema_2.users.id }).from(schema_2.users);
+    if (!allUsers.length) {
+        throw new NotFound_1.NotFound("No users found");
+    }
+    const userNotificationsData = allUsers.map(user => ({
+        id: (0, uuid_1.v4)(),
+        userId: user.id,
+        notificationId: newNotificationId,
+        status: "unseen",
+        createdAt: new Date()
+    }));
+    await db_1.db.insert(schema_1.userNotifications).values(userNotificationsData);
+    const result = await db_1.db
+        .select({ token: schema_2.users.fcmtoken })
+        .from(schema_2.users)
+        .where((0, drizzle_orm_1.isNotNull)(schema_2.users.fcmtoken));
+    const tokens = result.map(row => row.token).filter(Boolean);
+    if (!tokens.length) {
         res.json({
             success: true,
-            message: "Notification sent successfully",
-            results: {
-                successCount: response.successCount,
-                failureCount: response.failureCount,
-            },
+            message: "Notification saved but no FCM tokens found",
         });
+        return;
     }
-    catch (error) {
-        throw error;
-    }
+    const message = {
+        notification: { title, body },
+        tokens,
+    };
+    const response = await firebase_1.messaging.sendEachForMulticast(message);
+    res.json({
+        success: true,
+        message: "Notification sent successfully",
+        results: {
+            successCount: response.successCount,
+            failureCount: response.failureCount,
+        },
+    });
 };
 exports.sendNotificationToAll = sendNotificationToAll;
 // ✅ Get All
