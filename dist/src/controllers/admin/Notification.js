@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteNotification = exports.updateNotification = exports.getNotificationById = exports.getAllNotifications = exports.sendNotificationToAll = void 0;
+exports.deleteNotification = exports.updateNotification = exports.getNotificationById = exports.getAllNotifications = exports.testFCMSetup = exports.sendNotificationToAll = void 0;
 const firebase_1 = require("../../utils/firebase");
 const schema_1 = require("../../models/schema");
 const schema_2 = require("../../models/schema");
@@ -120,6 +120,50 @@ const sendNotificationToAll = async (req, res) => {
     }
 };
 exports.sendNotificationToAll = sendNotificationToAll;
+// دالة تست للتحقق من النظام
+const testFCMSetup = async (req, res) => {
+    try {
+        console.log("🔍 Testing FCM setup...");
+        // 1. تحقق من المستخدمين
+        const allUsers = await db_1.db.select({
+            id: schema_2.users.id,
+            fcmtoken: schema_2.users.fcmtoken
+        }).from(schema_2.users);
+        // 2. إحصائيات التوكنات
+        const usersWithTokens = allUsers.filter(u => u.fcmtoken);
+        const validTokens = allUsers.filter(u => u.fcmtoken &&
+            typeof u.fcmtoken === 'string' &&
+            u.fcmtoken.trim().length > 0 &&
+            u.fcmtoken !== 'null' &&
+            u.fcmtoken !== 'undefined');
+        console.log("📊 FCM Setup Statistics:");
+        console.log(`  Total users: ${allUsers.length}`);
+        console.log(`  Users with tokens: ${usersWithTokens.length}`);
+        console.log(`  Valid tokens: ${validTokens.length}`);
+        // 3. عينة من التوكنات
+        const sampleTokens = validTokens.slice(0, 3).map(user => ({
+            userId: user.id,
+            tokenPreview: user.fcmtoken?.substring(0, 30) + "...",
+            tokenLength: user.fcmtoken?.length
+        }));
+        console.log("🔍 Sample tokens:", sampleTokens);
+        res.json({
+            success: true,
+            message: "FCM setup test completed",
+            stats: {
+                totalUsers: allUsers.length,
+                usersWithTokens: usersWithTokens.length,
+                validTokens: validTokens.length,
+                sampleTokens
+            }
+        });
+    }
+    catch (error) {
+        console.error("❌ Test error:", error);
+        throw error;
+    }
+};
+exports.testFCMSetup = testFCMSetup;
 // ✅ Get All
 const getAllNotifications = async (req, res) => {
     const data = await db_1.db
