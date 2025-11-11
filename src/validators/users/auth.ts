@@ -10,6 +10,7 @@ export const signupSchema = z.object({
       password: z.string().min(8, "Password must be at least 8 characters"),
       dateOfBirth: z.string(),
       purpose: z.string().optional(),
+      cardId:z.string().optional(),
       imageBase64: z.string().optional(),
     })
     .superRefine((data, ctx) => {
@@ -37,6 +38,7 @@ export const signupSchema = z.object({
 
 export const loginSchema = z.object({
   body: z.object({
+    cardId: z.string().optional(),
     email: z.string().email(),
     password: z.string().min(8),
   }),

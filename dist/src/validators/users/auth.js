@@ -12,6 +12,7 @@ exports.signupSchema = zod_1.z.object({
         password: zod_1.z.string().min(8, "Password must be at least 8 characters"),
         dateOfBirth: zod_1.z.string(),
         purpose: zod_1.z.string().optional(),
+        cardId: zod_1.z.string().optional(),
         imageBase64: zod_1.z.string().optional(),
     })
         .superRefine((data, ctx) => {
@@ -37,6 +38,7 @@ exports.signupSchema = zod_1.z.object({
 });
 exports.loginSchema = zod_1.z.object({
     body: zod_1.z.object({
+        cardId: zod_1.z.string().optional(),
         email: zod_1.z.string().email(),
         password: zod_1.z.string().min(8),
     }),

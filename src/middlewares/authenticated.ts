@@ -16,16 +16,16 @@ export function authenticated(req: Request, res: Response, next: NextFunction) {
 
 
 
-export const authenticateAdmin: RequestHandler = (req, res, next) => {
-  const apiKey = req.headers['x-api-key'] as string;
+// export const authenticateAdmin: RequestHandler = (req, res, next) => {
+//   const apiKey = req.headers['x-api-key'] as string;
 
-  if (!apiKey || apiKey !== process.env.ADMIN_API_KEY) {
-    void res.status(401).json({
-      success: false,
-      message: 'Unauthorized: Invalid API key'
-    });
-    return; // مهم بعد void
-  }
+//   if (!apiKey || apiKey !== process.env.ADMIN_API_KEY) {
+//     void res.status(401).json({
+//       success: false,
+//       message: 'Unauthorized: Invalid API key'
+//     });
+//     return; // مهم بعد void
+//   }
 
-  next();
-};
+//   next();
+// };

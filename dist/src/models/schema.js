@@ -24,6 +24,7 @@ exports.users = (0, mysql_core_1.mysqlTable)("users", {
     email: (0, mysql_core_1.varchar)("email", { length: 255 }).unique().notNull(),
     hashedPassword: (0, mysql_core_1.varchar)("hashed_password", { length: 255 }).notNull(),
     purpose: (0, mysql_core_1.text)("purpose"),
+    cardId: (0, mysql_core_1.varchar)("cardId", { length: 36 }).primaryKey(),
     imagePath: (0, mysql_core_1.text)("image_path"),
     dateOfBirth: (0, mysql_core_1.date)("date_of_birth").notNull(),
     status: (0, mysql_core_1.mysqlEnum)(exports.userStatusEnum).default("pending").notNull(),

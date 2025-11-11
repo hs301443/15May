@@ -40,6 +40,7 @@ const signup = async (req, res) => {
         name: data.name,
         phoneNumber: data.phoneNumber,
         role: data.role,
+        cardId: data.cardId,
         email: data.email,
         hashedPassword,
         purpose: data.role === "guest" ? data.purpose : null,
@@ -88,15 +89,17 @@ const verifyEmail = async (req, res) => {
 exports.verifyEmail = verifyEmail;
 const login = async (req, res) => {
     const data = req.body;
+    const { emailOrCardId, password } = data;
+    // البحث إما بالإيميل أو الـ cardId
     const user = await db_1.db.query.users.findFirst({
-        where: (0, drizzle_orm_1.eq)(schema_1.users.email, data.email),
+        where: (0, drizzle_orm_1.or)((0, drizzle_orm_1.eq)(schema_1.users.email, emailOrCardId), (0, drizzle_orm_1.eq)(schema_1.users.cardId, emailOrCardId)),
     });
     if (!user) {
-        throw new Errors_1.UnauthorizedError("Invalid email or password");
+        throw new Errors_1.UnauthorizedError("Invalid email/card ID or password");
     }
-    const isMatch = await bcrypt_1.default.compare(data.password, user.hashedPassword);
+    const isMatch = await bcrypt_1.default.compare(password, user.hashedPassword);
     if (!isMatch) {
-        throw new Errors_1.UnauthorizedError("Invalid email or password");
+        throw new Errors_1.UnauthorizedError("Invalid email/card ID or password");
     }
     if (user.status !== "approved") {
         throw new Errors_1.ForbiddenError("Your account is not approved yet. Please wait for approval.");
@@ -109,7 +112,7 @@ const login = async (req, res) => {
         name: user.name,
         role: user.role === "member" ? "approved_member_user" : "approved_guest_user",
     });
-    (0, response_1.SuccessResponse)(res, { message: "login Successful", tokne: token }, 200);
+    (0, response_1.SuccessResponse)(res, { message: "Login successful", token }, 200);
 };
 exports.login = login;
 const getFcmToken = async (req, res) => {

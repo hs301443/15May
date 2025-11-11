@@ -53,6 +53,7 @@ export const signup = async (req: Request, res: Response) => {
     name: data.name,
     phoneNumber: data.phoneNumber,
     role: data.role,
+    cardId:data.cardId,
     email: data.email,
     hashedPassword,
     purpose: data.role === "guest" ? data.purpose : null,
@@ -115,18 +116,20 @@ export const verifyEmail = async (req: Request, res: Response) => {
 
 export const login = async (req: Request, res: Response) => {
   const data = req.body;
+  const { emailOrCardId, password } = data;
 
+  // البحث إما بالإيميل أو الـ cardId
   const user = await db.query.users.findFirst({
-    where: eq(users.email, data.email),
+    where: or(eq(users.email, emailOrCardId), eq(users.cardId, emailOrCardId)),
   });
 
   if (!user) {
-    throw new UnauthorizedError("Invalid email or password");
+    throw new UnauthorizedError("Invalid email/card ID or password");
   }
 
-  const isMatch = await bcrypt.compare(data.password, user.hashedPassword);
+  const isMatch = await bcrypt.compare(password, user.hashedPassword);
   if (!isMatch) {
-    throw new UnauthorizedError("Invalid email or password");
+    throw new UnauthorizedError("Invalid email/card ID or password");
   }
 
   if (user.status !== "approved") {
@@ -146,9 +149,8 @@ export const login = async (req: Request, res: Response) => {
       user.role === "member" ? "approved_member_user" : "approved_guest_user",
   });
 
-  SuccessResponse(res, { message: "login Successful", tokne: token }, 200);
+  SuccessResponse(res, { message: "Login successful", token }, 200);
 };
-
 export const getFcmToken = async (req: Request, res: Response) => {
   const { token } = req.body;
   const userId = req.user!.id;
