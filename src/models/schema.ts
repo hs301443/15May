@@ -34,7 +34,7 @@ export const users = mysqlTable("users", {
   email: varchar("email", { length: 255 }).unique().notNull(),
   hashedPassword: varchar("hashed_password", { length: 255 }).notNull(),
   purpose: text("purpose"),
-  cardId: varchar("cardId", { length: 36 }).primaryKey(),
+  cardId: varchar("cardId", { length: 36 }),
   imagePath: text("image_path"),
   dateOfBirth: date("date_of_birth").notNull(),
   status: mysqlEnum(userStatusEnum).default("pending").notNull(),
