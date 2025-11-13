@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.userNotifications = exports.notifications = exports.sliderImages = exports.sliders = exports.popUpsPages = exports.popUpsImages = exports.appPages = exports.userCompetition = exports.competitionsImages = exports.competitions = exports.complaints = exports.complaintsCategory = exports.reacts = exports.postsImages = exports.posts = exports.postsCategory = exports.userVotesItems = exports.userVotes = exports.votesItems = exports.votes = exports.emailVerifications = exports.users = exports.admins = exports.popUpsStatus = exports.userRoles = exports.userStatusEnum = void 0;
+exports.banners = exports.members = exports.userNotifications = exports.notifications = exports.sliderImages = exports.sliders = exports.popUpsPages = exports.popUpsImages = exports.appPages = exports.userCompetition = exports.competitionsImages = exports.competitions = exports.complaints = exports.complaintsCategory = exports.reacts = exports.postsImages = exports.posts = exports.postsCategory = exports.userVotesItems = exports.userVotes = exports.votesItems = exports.votes = exports.emailVerifications = exports.users = exports.admins = exports.popUpsStatus = exports.userRoles = exports.userStatusEnum = void 0;
 const mysql_core_1 = require("drizzle-orm/mysql-core");
 // ENUMS
 exports.userStatusEnum = ["pending", "approved", "rejected"];
@@ -203,5 +203,19 @@ exports.userNotifications = (0, mysql_core_1.mysqlTable)("user_notifications", {
         .notNull()
         .references(() => exports.notifications.id),
     status: (0, mysql_core_1.mysqlEnum)(["unseen", "seen"]).default("unseen").notNull(),
+    createdAt: (0, mysql_core_1.timestamp)("created_at").defaultNow(),
+});
+exports.members = (0, mysql_core_1.mysqlTable)("members", {
+    id: (0, mysql_core_1.varchar)("id", { length: 36 }).primaryKey(),
+    name: (0, mysql_core_1.varchar)("name", { length: 255 }).notNull(),
+    photo: (0, mysql_core_1.text)("photo").notNull(),
+    nameSymbol: (0, mysql_core_1.varchar)("name_symbol", { length: 255 }).notNull(),
+    photoSymbol: (0, mysql_core_1.text)("photo_symbol").notNull(),
+    number: (0, mysql_core_1.int)("number").notNull(),
+    createdAt: (0, mysql_core_1.timestamp)("created_at").defaultNow(),
+});
+exports.banners = (0, mysql_core_1.mysqlTable)("banners", {
+    id: (0, mysql_core_1.varchar)("id", { length: 36 }).primaryKey(),
+    imagePath: (0, mysql_core_1.text)("image_path").notNull(),
     createdAt: (0, mysql_core_1.timestamp)("created_at").defaultNow(),
 });

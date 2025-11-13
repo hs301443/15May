@@ -9,6 +9,8 @@ import AuthRoute from "./auth";
 import ComplaintsRoute from "./complaints";
 import CompetitionsRoute from "./competitions";
 import notificationRoute from "./Notification";
+import BannerRouter from "./Banner";
+import memberRouter from "./member";
 import birthdayRouter  from "./checkBirthday";
 import { Router } from "express";
 import multer from "multer";
@@ -30,4 +32,6 @@ route.use("/complaints", ComplaintsRoute);
 route.use("/competitions", CompetitionsRoute);
 route.use("/notifications",notificationRoute); // Assuming Notification.ts is in the same directory
 route.use("/birthday", birthdayRouter); // Assuming checkBirthday.ts is in the same directory
+route.use("/banners", BannerRouter);
+route.use("/members", memberRouter);
 export default route;
