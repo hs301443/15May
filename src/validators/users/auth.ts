@@ -38,8 +38,7 @@ export const signupSchema = z.object({
 
 export const loginSchema = z.object({
   body: z.object({
-    cardId: z.string().optional(),
-    email: z.string().email(),
+    emailOrCardId: z.string(),
     password: z.string().min(8),
   }),
 });

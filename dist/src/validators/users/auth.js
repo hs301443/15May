@@ -38,8 +38,7 @@ exports.signupSchema = zod_1.z.object({
 });
 exports.loginSchema = zod_1.z.object({
     body: zod_1.z.object({
-        cardId: zod_1.z.string().optional(),
-        email: zod_1.z.string().email(),
+        emailOrCardId: zod_1.z.string(),
         password: zod_1.z.string().min(8),
     }),
 });
