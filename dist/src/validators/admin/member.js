@@ -9,17 +9,17 @@ exports.CreateMemberSchema = zod_1.default.object({
     body: zod_1.default.object({
         name: zod_1.default.string().min(1),
         photo: zod_1.default.string().min(1),
-        nameSymbol: zod_1.default.string().min(1),
-        photoSymbol: zod_1.default.string().min(1),
         number: zod_1.default.string().min(1),
+        description: zod_1.default.string().min(1),
+        layer: zod_1.default.number().min(1),
     }),
 });
 exports.UpdateMemberSchema = zod_1.default.object({
     body: zod_1.default.object({
         name: zod_1.default.string().min(1).optional(),
         photo: zod_1.default.string().min(1).optional(),
-        nameSymbol: zod_1.default.string().min(1).optional(),
-        photoSymbol: zod_1.default.string().min(1).optional(),
         number: zod_1.default.string().min(1).optional(),
+        description: zod_1.default.string().min(1).optional(),
+        layer: zod_1.default.number().min(1).optional(),
     }),
 });

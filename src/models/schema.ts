@@ -249,9 +249,9 @@ export const members = mysqlTable("members", {
   id: varchar("id", { length: 36 }).primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
   photo: text("photo").notNull(),
-  nameSymbol: varchar("name_symbol", { length: 255 }).notNull(),
-  photoSymbol: text("photo_symbol").notNull(),
   number: int("number").notNull(),
+  description: text("description").notNull(),
+  layer: int("layer").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
  

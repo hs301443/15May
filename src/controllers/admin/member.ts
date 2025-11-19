@@ -10,15 +10,15 @@ import { deletePhotoFromServer } from "../../utils/deleteImage";
 import { v4 as uuidv4 } from "uuid"; 
 
 export const createMember = async (req: Request, res: Response) => {
-  const { name, photo, nameSymbol, photoSymbol, number } = req.body;
+  const { name, photo, description, layer, number } = req.body;
   const memberId = uuidv4();
 
   await db.insert(members).values({
     id: memberId,
     name,
     photo: await saveBase64Image(photo, memberId, req, "members"),
-    nameSymbol,
-    photoSymbol: await saveBase64Image(photoSymbol, memberId + "_symbol", req, "members/symbols"),
+    description,
+    layer,
     number,
     createdAt: new Date(new Date().getTime() + 3 * 60 * 60 * 1000),
   });
@@ -42,29 +42,24 @@ export const getMember = async (req: Request, res: Response) => {
 
 export const updateMember = async (req: Request, res: Response) => {
   const id = req.params.id;
-  const { name, photo, nameSymbol, photoSymbol, number } = req.body;
+  const { name, photo, description,layer , number } = req.body;
 
   const [existingMember] = await db.select().from(members).where(eq(members.id, id));
   if (!existingMember) throw new NotFound("Member not found");
 
   let photoPath = existingMember.photo;
-  let photoSymbolPath = existingMember.photoSymbol;
-
+  
   if (photo && photo.startsWith("data:")) {
     await deletePhotoFromServer(new URL(photoPath).pathname);
     photoPath = await saveBase64Image(photo, id, req, "members");
   }
 
-  if (photoSymbol && photoSymbol.startsWith("data:")) {
-    await deletePhotoFromServer(new URL(photoSymbolPath).pathname);
-    photoSymbolPath = await saveBase64Image(photoSymbol, id + "_symbol", req, "members/symbols");
-  }
 
   await db.update(members).set({
     name,
     photo: photoPath,
-    nameSymbol,
-    photoSymbol: photoSymbolPath,
+    description,
+    layer,
     number,
   }).where(eq(members.id, id));
 
@@ -78,8 +73,7 @@ export const deleteMember = async (req: Request, res: Response) => {
   if (!member) throw new NotFound("Member not found");
 
   await deletePhotoFromServer(new URL(member.photo).pathname);
-  await deletePhotoFromServer(new URL(member.photoSymbol).pathname);
-
+  
   await db.delete(members).where(eq(members.id, id));
   SuccessResponse(res, { message: "Member deleted" }, 200);
 };

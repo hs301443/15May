@@ -209,9 +209,9 @@ exports.members = (0, mysql_core_1.mysqlTable)("members", {
     id: (0, mysql_core_1.varchar)("id", { length: 36 }).primaryKey(),
     name: (0, mysql_core_1.varchar)("name", { length: 255 }).notNull(),
     photo: (0, mysql_core_1.text)("photo").notNull(),
-    nameSymbol: (0, mysql_core_1.varchar)("name_symbol", { length: 255 }).notNull(),
-    photoSymbol: (0, mysql_core_1.text)("photo_symbol").notNull(),
     number: (0, mysql_core_1.int)("number").notNull(),
+    description: (0, mysql_core_1.text)("description").notNull(),
+    layer: (0, mysql_core_1.int)("layer").notNull(),
     createdAt: (0, mysql_core_1.timestamp)("created_at").defaultNow(),
 });
 exports.banners = (0, mysql_core_1.mysqlTable)("banners", {
